@@ -1,0 +1,68 @@
+#include <Servo.h>
+
+// Servo pin mappings
+const int servoPin1 = 2;
+const int servoPin2 = 3;
+const int servoPin3 = 4;
+const int servoPin4 = 5;
+
+// Arm dimensions (lengths of each link)
+const float l1 = 10.0;
+const float l2 = 8.0;
+const float l3 = 6.0;
+const float l4 = 4.0;
+
+// Function to calculate inverse kinematics
+void inverseKinematics(float x, float y, float z)
+{
+  // Calculate joint angles
+  float theta1 = atan2(y, x);
+  
+  float c3 = (pow(x, 2) + pow(y, 2) + pow(z, 2) - pow(l1, 2) - pow(l2, 2) - pow(l3, 2) - pow(l4, 2)) / (2 * l1 * l2);
+  float s3 = sqrt(1 - pow(c3, 2));
+  float theta3 = atan2(s3, c3);
+
+  float k1 = l1 + l2 * c3;
+  float k2 = l2 * s3;
+  float theta2 = atan2(z, sqrt(pow(x, 2) + pow(y, 2))) - atan2(k2, k1);
+
+  float theta4 = atan2(y - l1 * sin(theta1) - l2 * sin(theta1 + theta2) - l3 * sin(theta1 + theta2 + theta3), x - l1 * cos(theta1) - l2 * cos(theta1 + theta2) - l3 * cos(theta1 + theta2 + theta3));
+
+  // Convert angles to servo positions
+  int servoPos1 = map(theta1, -PI, PI, 0, 180);
+  int servoPos2 = map(theta2, -PI, PI, 0, 180);
+  int servoPos3 = map(theta3, -PI, PI, 0, 180);
+  int servoPos4 = map(theta4, -PI, PI, 0, 180);
+
+  // Set servo positions
+  servo1.write(servoPos1);
+  servo2.write(servoPos2);
+  servo3.write(servoPos3);
+  servo4.write(servoPos4);
+}
+
+// Create servo objects
+Servo servo1;
+Servo servo2;
+Servo servo3;
+Servo servo4;
+
+void setup() {
+  // Attach servos to pins
+  servo1.attach(servoPin1);
+  servo2.attach(servoPin2);
+  servo3.attach(servoPin3);
+  servo4.attach(servoPin4);
+}
+
+void loop() {
+  // Example inverse kinematics usage
+  float targetX = 10.0;
+  float targetY = 5.0;
+  float targetZ = 8.0;
+
+  inverseKinematics(targetX, targetY, targetZ);
+
+  // Wait for some time before updating the position again
+  delay(1000);
+}
